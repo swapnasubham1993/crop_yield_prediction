@@ -1,0 +1,131 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python src/data/ingest.py
+    deps:
+    - path: data/raw/crop_yield.csv
+      hash: md5
+      md5: cefa48c7486bbc1fa4f2f65f4e1ef342
+      size: 1620945
+    - path: src/data/ingest.py
+      hash: md5
+      md5: 7b1675622d3887a58aefaa6143fe1668
+      size: 1466
+    params:
+      params.yaml:
+        data.raw_file: data/raw/crop_yield.csv
+    outs:
+    - path: data/interim/cleaned_data.csv
+      hash: md5
+      md5: f1e993a7524392f3cb9123bb24963948
+      size: 1582745
+  preprocess:
+    cmd: python src/features/preprocess.py
+    deps:
+    - path: data/interim/cleaned_data.csv
+      hash: md5
+      md5: f1e993a7524392f3cb9123bb24963948
+      size: 1582745
+    - path: src/features/preprocess.py
+      hash: md5
+      md5: 32feb67a7b665155c26fb7a52b6132a1
+      size: 3273
+    params:
+      params.yaml:
+        base.random_state: 42
+        base.test_size: 0.2
+        data.drop_cols:
+        - Area
+        - Production
+        - Fertilizer
+        - Crop_Year
+    outs:
+    - path: data/processed/columns.pkl
+      hash: md5
+      md5: 0ccf10626aadb5ce8f17b55e577a9374
+      size: 1576
+    - path: data/processed/preprocessor.pkl
+      hash: md5
+      md5: 1f34e5e0d8f94368cbc8db8f48b68155
+      size: 5169
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 28d4a206ef9d3a79422cd17f67ad2aa0
+      size: 7351031
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 0404644b9d858e0bb6a40564f06523ba
+      size: 29395525
+  train:
+    cmd: python src/models/train_model.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 0404644b9d858e0bb6a40564f06523ba
+      size: 29395525
+    - path: src/models/train_model.py
+      hash: md5
+      md5: d49493829b87c91f55b0ce48fe1ec5b9
+      size: 2450
+    params:
+      params.yaml:
+        train.max_depth: 3
+        train.model_type: gradient_boosting
+        train.n_estimators: 100
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: ff6c1804f7f5ba3157ba665d96da98aa
+      size: 139013
+  test_data:
+    cmd: pytest src/data/test_data.py
+    deps:
+    - path: data/raw/crop_yield.csv
+      hash: md5
+      md5: cefa48c7486bbc1fa4f2f65f4e1ef342
+      size: 1620945
+    - path: src/data/test_data.py
+      hash: md5
+      md5: db6619e08e7ede3f2937cf6fe9b81fd2
+      size: 1007
+  evaluate:
+    cmd: python src/models/evaluate_model.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 28d4a206ef9d3a79422cd17f67ad2aa0
+      size: 7351031
+    - path: models/model.pkl
+      hash: md5
+      md5: ff6c1804f7f5ba3157ba665d96da98aa
+      size: 139013
+    - path: src/models/evaluate_model.py
+      hash: md5
+      md5: e054391527a50d804a4fd82137bbfeca
+      size: 1550
+    outs:
+    - path: metrics.json
+      hash: md5
+      md5: 0a37562427e4c9d214d1598c9cb6c2c4
+      size: 73
+  analyze:
+    cmd: python src/visualization/analyze.py
+    deps:
+    - path: data/interim/cleaned_data.csv
+      hash: md5
+      md5: f1e993a7524392f3cb9123bb24963948
+      size: 1582745
+    - path: src/visualization/analyze.py
+      hash: md5
+      md5: 2905b11e3b4c06926a32b36a060df01c
+      size: 3352
+    outs:
+    - path: reports/eda_summary.txt
+      hash: md5
+      md5: e8ed0cf64ab3c0ac92573f12b3016552
+      size: 2247
+    - path: reports/figures/
+      hash: md5
+      md5: f1e7e82d56fe18f631d2db7a06e3343c.dir
+      size: 83279
+      nfiles: 2

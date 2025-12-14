@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Environments
+.env
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Initializing Data/Models (Large files)
+data/
+models/
+reports/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# DVC
+.dvc/cache
+.dvc/tmp
+.dvc/config.local
