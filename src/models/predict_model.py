@@ -2,6 +2,11 @@ import pandas as pd
 import pickle
 import os
 import yaml
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 def load_params(params_path="params.yaml"):
     with open(params_path, "r") as f:
@@ -20,21 +25,21 @@ def predict():
         raise FileNotFoundError(f"Best model not found at {model_path}. Run training first.")
         
     # Load Model
-    print(f"Loading best model from {model_path}...")
+    logger.info(f"Loading best model from {model_path}...")
     with open(model_path, "rb") as f:
         model = pickle.load(f)
         
-    print(f"Model type: {type(model).__name__}")
+    logger.info(f"Model type: {type(model).__name__}")
         
     # Load Test Data (Simulating new data)
-    print(f"Loading test data from {test_path}...")
+    logger.info(f"Loading test data from {test_path}...")
     df_test = pd.read_csv(test_path)
     
     X_test = df_test.drop(columns=[target_col])
     y_true = df_test[target_col]
     
     # Predict
-    print("Running predictions...")
+    logger.info("Running predictions...")
     predictions = model.predict(X_test)
     
     # Show samples
@@ -44,13 +49,12 @@ def predict():
         "Difference": y_true - predictions
     })
     
-    print("\nSample Predictions:")
-    print(results.head(10).to_string())
+    logger.info(f"\nSample Predictions:\n{results.head(10).to_string()}")
     
     # Save predictions
     save_path = "reports/predictions.csv"
     results.to_csv(save_path, index=False)
-    print(f"\nAll predictions saved to {save_path}")
+    logger.info(f"\nAll predictions saved to {save_path}")
 
 if __name__ == "__main__":
     predict()

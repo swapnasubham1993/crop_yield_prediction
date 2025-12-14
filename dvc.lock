@@ -9,8 +9,8 @@ stages:
       size: 1620945
     - path: src/data/ingest.py
       hash: md5
-      md5: 7d3fd5783b5416cf32dde3ff95f7adad
-      size: 1603
+      md5: 1eaf20868b2251f47458e2a830c98367
+      size: 1771
     params:
       params.yaml:
         data.raw_file: data/raw/crop_yield.csv
@@ -28,8 +28,8 @@ stages:
       size: 1582745
     - path: src/features/preprocess.py
       hash: md5
-      md5: 7d9272a0c335428cba658b5cc605b9c8
-      size: 6469
+      md5: 06c33289af21633c2188272b7ba8f15e
+      size: 6703
     params:
       params.yaml:
         base.random_state: 42
@@ -135,20 +135,24 @@ stages:
       hash: md5
       md5: 28d4a206ef9d3a79422cd17f67ad2aa0
       size: 7351031
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 28d4a206ef9d3a79422cd17f67ad2aa0
+      size: 7351031
     - path: data/processed/train.csv
       hash: md5
       md5: 0404644b9d858e0bb6a40564f06523ba
       size: 29395525
     - path: src/models/train_evaluate.py
       hash: md5
-      md5: b50dd5e68cbe28fd714a40cae022f76a
-      size: 6592
+      md5: 0aa0652939580853831e16ac24c44cd1
+      size: 7093
     outs:
     - path: models/best_model.pkl
       hash: md5
-      md5: be6b524550bc58ac2a3530de8f3240e2
-      size: 139157
+      md5: a813ff9bbc242212d70d4132ba93efa7
+      size: 139156
     - path: reports/model_comparison.csv
       hash: md5
-      md5: 55ff96cd719cfd2f6c0a8149bd8105ed
-      size: 1352
+      md5: 8efa7166a9d06bee59cfcc05a2737e0d
+      size: 1347

@@ -1,6 +1,11 @@
 import pandas as pd
 import yaml
+import sys
 import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 def load_params(params_path="params.yaml"):
     with open(params_path, "r") as f:
@@ -17,7 +22,7 @@ def ingest_data():
     clean_path = os.path.join(interim_dir, "cleaned_data.csv")
     
     # Load
-    print(f"Loading data from {raw_path}...")
+    logger.info(f"Loading data from {raw_path}...")
     df = pd.read_csv(raw_path)
     
     # Standardize Column Names
@@ -29,7 +34,7 @@ def ingest_data():
     for col in df.select_dtypes(include="object").columns:
         df[col] = df[col].str.lower().str.strip().str.replace(r'\s+', '_', regex=True)
     
-    print(f"Data cleaned (string standardization). saving to {clean_path}")
+    logger.info(f"Data cleaned (string standardization). saving to {clean_path}")
     df.to_csv(clean_path, index=False)
     
     # MLflow Logging
@@ -40,7 +45,7 @@ def ingest_data():
         mlflow.log_metric("raw_rows", df.shape[0])
         mlflow.log_metric("raw_cols", df.shape[1])
         mlflow.log_artifact(clean_path)
-        print("Logged data ingestion metrics to MLflow.")
+        logger.info("Logged data ingestion metrics to MLflow.")
 
 if __name__ == "__main__":
     ingest_data()

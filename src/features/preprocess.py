@@ -10,6 +10,11 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.tools.tools import add_constant
 import numpy as np
 import mlflow
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 def load_params(params_path="params.yaml"):
     with open(params_path, "r") as f:
@@ -34,7 +39,7 @@ def preprocess():
     os.makedirs(processed_dir, exist_ok=True)
     
     # Load
-    print(f"Loading cleaned data from {clean_path}...")
+    logger.info(f"Loading cleaned data from {clean_path}...")
     df = pd.read_csv(clean_path)
     
     # Filtering Logic: "count the crop_year and if count is less than 50 then reomves those records"
@@ -43,7 +48,7 @@ def preprocess():
         years_to_keep = year_counts[year_counts >= 50].index
         initial_shape = df.shape
         df = df[df['crop_year'].isin(years_to_keep)]
-        print(f"Filtered years with count < 50. Shape changed from {initial_shape} to {df.shape}")
+        logger.info(f"Filtered years with count < 50. Shape changed from {initial_shape} to {df.shape}")
         
     # Drop Columns
     # Normalize drop_cols to lower case to match cleaned columns
@@ -55,7 +60,7 @@ def preprocess():
     available_numeric = [c for c in numeric_features if c in df.columns]
     
     if available_numeric:
-        print("Skewness:\n", df[available_numeric].skew().sort_values())
+        logger.info(f"Skewness:\n{df[available_numeric].skew().sort_values()}")
         
         # Plot Distributions
         plt.figure(figsize=(15, 20))
@@ -70,7 +75,7 @@ def preprocess():
         mlflow.log_artifact("reports/figures/feature_distributions.png")
 
     # --- Variance Inflation Factor (VIF) ---
-    print("Checking VIF...")
+    logger.info("Checking VIF...")
     # Select numeric features for VIF (excluding target)
     vif_features = [c for c in df.select_dtypes(include=['float64', 'int64']).columns if c != target_col and c not in ['crop_year']] 
     # crop_year is technically numeric but often treated as categorical or dropped. User dropped Area/Production.
@@ -89,21 +94,21 @@ def preprocess():
         vif_data["VIF"] = [variance_inflation_factor(X_vif_const.values, i+1) for i in range(len(vif_features))] # +1 to skip const
         vif_data = vif_data.sort_values(by="VIF", ascending=False)
         
-        print("\nCurrent VIF:\n", vif_data)
+        logger.info(f"\nCurrent VIF:\n{vif_data}")
         
         max_vif = vif_data.iloc[0]["VIF"]
         max_feature = vif_data.iloc[0]["feature"]
         
         if max_vif > 10:
-            print(f"Removing {max_feature} (VIF={max_vif:.2f} > 10)")
+            logger.info(f"Removing {max_feature} (VIF={max_vif:.2f} > 10)")
             vif_features.remove(max_feature)
             df = df.drop(columns=[max_feature])
             mlflow.log_param(f"dropped_vif_{max_feature}", max_vif)
         else:
-            print("All features have VIF <= 10. VIF check complete.")
+            logger.info("All features have VIF <= 10. VIF check complete.")
             break
             
-    print(f"Final features selected: {list(df.columns)}")
+    logger.info(f"Final features selected: {list(df.columns)}")
     
     # Separate Target
     target_col = target_col.lower()
@@ -132,10 +137,10 @@ def preprocess():
         X_encoded, y, test_size=test_size, random_state=random_state
     )
     
-    print("x_train - >  ", X_train.shape)
-    print("y_train - >  ", y_train.shape)
-    print("x_test  - >  ", X_test.shape)
-    print("y_test  - >  ", y_test.shape)
+    logger.info(f"x_train - >  {X_train.shape}")
+    logger.info(f"y_train - >  {y_train.shape}")
+    logger.info(f"x_test  - >  {X_test.shape}")
+    logger.info(f"y_test  - >  {y_test.shape}")
     
     # Scaling
     pt = PowerTransformer(method='yeo-johnson')
@@ -156,7 +161,7 @@ def preprocess():
     train_df.to_csv(params['data']['train_file'], index=False)
     test_df.to_csv(params['data']['test_file'], index=False)
     
-    print(f"Preprocessing complete. Saved to {processed_dir}")
+    logger.info(f"Preprocessing complete. Saved to {processed_dir}")
     
     # Log Final Metrics
     mlflow.log_metric("train_rows", X_train.shape[0])

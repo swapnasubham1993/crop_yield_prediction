@@ -14,16 +14,13 @@ stages:
     deps:
       - src/data/test_data.py
       - data/raw/crop_yield.csv
-    # Test on raw data (schema checks), or should test operate on cleaned?
-    # User said "In the preprocessing before that I want to check the eda". 
-    # Usually we validate raw schema first. Let's keep test on raw for now, or add test on clean?
-    # Let's keep it on raw as it was.
+      - data/raw/crop_yield.csv
 
   analyze:
     cmd: python src/visualization/analyze.py
     deps:
       - src/visualization/analyze.py
-      - data/interim/cleaned_data.csv # Depend on clean
+      - data/interim/cleaned_data.csv
     outs:
       - reports/figures/
       - reports/eda_summary.txt
@@ -32,7 +29,7 @@ stages:
     cmd: python src/features/preprocess.py
     deps:
       - src/features/preprocess.py
-      - data/interim/cleaned_data.csv # Depend on clean
+      - data/interim/cleaned_data.csv
     params:
       - data.drop_cols
       - base.test_size
@@ -49,8 +46,7 @@ stages:
       - src/models/train_evaluate.py
       - data/processed/train.csv
       - data/processed/test.csv
-    # params:
-    #   - train.model_type (The script now loops over all types, relying on internal lists)
+      - data/processed/test.csv
     outs:
       - models/best_model.pkl
       - reports/model_comparison.csv

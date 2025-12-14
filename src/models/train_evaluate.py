@@ -5,9 +5,13 @@ import os
 import pickle
 import time
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import cross_val_score, KFold
 import mlflow
 import mlflow.sklearn
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Linear
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
@@ -54,8 +58,9 @@ def evaluate_models():
     test_path = params['data']['test_file']
     target_col = params['data']['target_col'].lower()
     
+    
     # Load Data
-    print("Loading data...")
+    logger.info("Loading data...")
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
     
@@ -64,8 +69,8 @@ def evaluate_models():
     X_test = test_df.drop(columns=[target_col])
     y_test = test_df[target_col]
     
-    print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
-    print(f"X_test: {X_test.shape}, y_test: {y_test.shape}")
+    logger.info(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+    logger.info(f"X_test: {X_test.shape}, y_test: {y_test.shape}")
     
     # Define Models
     models = {
@@ -85,17 +90,17 @@ def evaluate_models():
     if XGBRegressor:
         models["XGBoost"] = XGBRegressor()
     else:
-        print("XGBoost not installed. Skipping.")
+        logger.warning("XGBoost not installed. Skipping.")
         
     if LGBMRegressor:
         models["LightGBM"] = LGBMRegressor(verbose=-1)
     else:
-        print("LightGBM not installed. Skipping.")
+        logger.warning("LightGBM not installed. Skipping.")
         
     if CatBoostRegressor:
         models["CatBoost"] = CatBoostRegressor(verbose=0)
     else:
-        print("CatBoost not installed. Skipping.")
+        logger.warning("CatBoost not installed. Skipping.")
         
     # Voting Regressor (using a subset of base models)
     voting_estimators = [
@@ -118,10 +123,10 @@ def evaluate_models():
     # Evaluation
     results = []
     
-    print("\nStarting Model Evaluation...")
-    print("-" * 80)
-    print(f"{'Model':<25} | {'MAE':<10} | {'MSE':<10} | {'R2 Score':<10} | {'Time (s)':<10}")
-    print("-" * 80)
+    logger.info("\nStarting Model Evaluation...")
+    logger.info("-" * 80)
+    logger.info(f"{'Model':<25} | {'MAE':<10} | {'MSE':<10} | {'R2 Score':<10} | {'Time (s)':<10}")
+    logger.info("-" * 80)
     
     best_model_name = None
     best_r2 = -float("inf")
@@ -159,7 +164,7 @@ def evaluate_models():
                     # Log Model (optional, can be heavy for many models)
                     # mlflow.sklearn.log_model(model, "model") 
                     
-                    print(f"{name:<25} | {mae:<10.4f} | {mse:<10.4f} | {r2:<10.4f} | {elapsed:<10.2f}")
+                    logger.info(f"{name:<25} | {mae:<10.4f} | {mse:<10.4f} | {r2:<10.4f} | {elapsed:<10.2f}")
                     
                     results.append({
                         "Model": name,
@@ -175,16 +180,22 @@ def evaluate_models():
                         best_model_obj = model
                         
                 except Exception as e:
-                    print(f"{name:<25} | ERROR: {str(e)}")
+                    logger.error(f"{name:<25} | ERROR: {str(e)}")
+
+        # Log Best Model to Parent Run
+        if best_model_name:
+            mlflow.log_param("best_model", best_model_name)
+            mlflow.log_metric("best_r2_score", best_r2)
+            logger.info(f"\nLogged Best Model: {best_model_name} (R2: {best_r2:.4f}) to MLflow Parent Run.")
             
-    print("-" * 80)
-    print(f"Best Model: {best_model_name} (R2: {best_r2:.4f})")
+    logger.info("-" * 80)
+    logger.info(f"Best Model: {best_model_name} (R2: {best_r2:.4f})")
     
     # Save Results
     results_df = pd.DataFrame(results).sort_values(by="R2", ascending=False)
     os.makedirs("reports", exist_ok=True)
     results_df.to_csv("reports/model_comparison.csv", index=False)
-    print("Comparison results saved to reports/model_comparison.csv")
+    logger.info("Comparison results saved to reports/model_comparison.csv")
     
     # Save Best Model
     if best_model_obj:
@@ -193,7 +204,7 @@ def evaluate_models():
         model_path = os.path.join(model_dir, "best_model.pkl")
         with open(model_path, "wb") as f:
             pickle.dump(best_model_obj, f)
-        print(f"Best model ({best_model_name}) saved to {model_path}")
+        logger.info(f"Best model ({best_model_name}) saved to {model_path}")
 
 if __name__ == "__main__":
     evaluate_models()

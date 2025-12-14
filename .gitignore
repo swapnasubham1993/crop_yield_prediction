@@ -24,6 +24,7 @@ mlflow.db
 
 # Logs
 *.log
+logs/
 catboost_info/
 
 # Jupyter
