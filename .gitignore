@@ -15,7 +15,7 @@ venv/
 
 # Initializing Data/Models (Large files)
 data/
-models/
+/models/
 reports/
 
 # MLflow
@@ -24,6 +24,7 @@ mlflow.db
 
 # Logs
 *.log
+catboost_info/
 
 # Jupyter
 .ipynb_checkpoints/
