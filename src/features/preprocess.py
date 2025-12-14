@@ -9,6 +9,7 @@ import seaborn as sns
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.tools.tools import add_constant
 import numpy as np
+import mlflow
 
 def load_params(params_path="params.yaml"):
     with open(params_path, "r") as f:
@@ -17,6 +18,10 @@ def load_params(params_path="params.yaml"):
 
 def preprocess():
     params = load_params()
+    
+    # MLflow Init
+    mlflow.set_experiment(params['base']['project'])
+    mlflow.start_run(run_name="Feature Engineering")
     
     # Read from INTERIM
     clean_path = "data/interim/cleaned_data.csv"
@@ -62,6 +67,7 @@ def preprocess():
         os.makedirs("reports/figures", exist_ok=True)
         plt.savefig("reports/figures/feature_distributions.png")
         plt.close()
+        mlflow.log_artifact("reports/figures/feature_distributions.png")
 
     # --- Variance Inflation Factor (VIF) ---
     print("Checking VIF...")
@@ -92,6 +98,7 @@ def preprocess():
             print(f"Removing {max_feature} (VIF={max_vif:.2f} > 10)")
             vif_features.remove(max_feature)
             df = df.drop(columns=[max_feature])
+            mlflow.log_param(f"dropped_vif_{max_feature}", max_vif)
         else:
             print("All features have VIF <= 10. VIF check complete.")
             break
@@ -150,6 +157,16 @@ def preprocess():
     test_df.to_csv(params['data']['test_file'], index=False)
     
     print(f"Preprocessing complete. Saved to {processed_dir}")
+    
+    # Log Final Metrics
+    mlflow.log_metric("train_rows", X_train.shape[0])
+    mlflow.log_metric("train_cols", X_train.shape[1])
+    mlflow.log_metric("test_rows", X_test.shape[0])
+    mlflow.log_artifact(os.path.join(processed_dir, 'columns.pkl'))
+    mlflow.log_artifact(os.path.join(processed_dir, 'preprocessor.pkl'))
+    
+    
+    mlflow.end_run()
 
 if __name__ == "__main__":
     preprocess()

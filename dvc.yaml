@@ -43,24 +43,14 @@ stages:
       - data/processed/preprocessor.pkl
       - data/processed/columns.pkl
 
-  train:
-    cmd: python src/models/train_model.py
+  train_evaluate:
+    cmd: python src/models/train_evaluate.py
     deps:
-      - src/models/train_model.py
+      - src/models/train_evaluate.py
       - data/processed/train.csv
-    params:
-      - train.model_type
-      - train.n_estimators
-      - train.max_depth
-    outs:
-      - models/model.pkl
-
-  evaluate:
-    cmd: python src/models/evaluate_model.py
-    deps:
-      - src/models/evaluate_model.py
-      - models/model.pkl
       - data/processed/test.csv
-    metrics:
-      - metrics.json:
-          cache: false
+    # params:
+    #   - train.model_type (The script now loops over all types, relying on internal lists)
+    outs:
+      - models/best_model.pkl
+      - reports/model_comparison.csv

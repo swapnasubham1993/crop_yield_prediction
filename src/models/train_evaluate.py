@@ -6,6 +6,8 @@ import pickle
 import time
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import cross_val_score, KFold
+import mlflow
+import mlflow.sklearn
 
 # Linear
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
@@ -125,40 +127,55 @@ def evaluate_models():
     best_r2 = -float("inf")
     best_model_obj = None
     
-    for name, model in models.items():
-        start_time = time.time()
-        
-        try:
-            # Train
-            model.fit(X_train, y_train)
-            
-            # Predict
-            y_pred = model.predict(X_test)
-            
-            # Metrics
-            mae = mean_absolute_error(y_test, y_pred)
-            mse = mean_squared_error(y_test, y_pred)
-            r2 = r2_score(y_test, y_pred)
-            
-            elapsed = time.time() - start_time
-            
-            print(f"{name:<25} | {mae:<10.4f} | {mse:<10.4f} | {r2:<10.4f} | {elapsed:<10.2f}")
-            
-            results.append({
-                "Model": name,
-                "MAE": mae,
-                "MSE": mse,
-                "R2": r2,
-                "Time": elapsed
-            })
-            
-            if r2 > best_r2:
-                best_r2 = r2
-                best_model_name = name
-                best_model_obj = model
+    mlflow.set_experiment(params['base']['project'])
+    
+    with mlflow.start_run(run_name="Model Comparison"):
+        for name, model in models.items():
+            run_name = name.replace(" ", "_")
+            with mlflow.start_run(run_name=run_name, nested=True):
+                start_time = time.time()
                 
-        except Exception as e:
-            print(f"{name:<25} | ERROR: {str(e)}")
+                try:
+                    # Train
+                    model.fit(X_train, y_train)
+                    
+                    # Predict
+                    y_pred = model.predict(X_test)
+                    
+                    # Metrics
+                    mae = mean_absolute_error(y_test, y_pred)
+                    mse = mean_squared_error(y_test, y_pred)
+                    r2 = r2_score(y_test, y_pred)
+                    
+                    elapsed = time.time() - start_time
+                    
+                    # Log to MLflow
+                    mlflow.log_metric("MAE", mae)
+                    mlflow.log_metric("MSE", mse)
+                    mlflow.log_metric("R2", r2)
+                    mlflow.log_metric("Training_Time", elapsed)
+                    mlflow.log_param("model_type", name)
+                    
+                    # Log Model (optional, can be heavy for many models)
+                    # mlflow.sklearn.log_model(model, "model") 
+                    
+                    print(f"{name:<25} | {mae:<10.4f} | {mse:<10.4f} | {r2:<10.4f} | {elapsed:<10.2f}")
+                    
+                    results.append({
+                        "Model": name,
+                        "MAE": mae,
+                        "MSE": mse,
+                        "R2": r2,
+                        "Time": elapsed
+                    })
+                    
+                    if r2 > best_r2:
+                        best_r2 = r2
+                        best_model_name = name
+                        best_model_obj = model
+                        
+                except Exception as e:
+                    print(f"{name:<25} | ERROR: {str(e)}")
             
     print("-" * 80)
     print(f"Best Model: {best_model_name} (R2: {best_r2:.4f})")

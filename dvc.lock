@@ -9,8 +9,8 @@ stages:
       size: 1620945
     - path: src/data/ingest.py
       hash: md5
-      md5: 7b1675622d3887a58aefaa6143fe1668
-      size: 1466
+      md5: 7d3fd5783b5416cf32dde3ff95f7adad
+      size: 1603
     params:
       params.yaml:
         data.raw_file: data/raw/crop_yield.csv
@@ -28,8 +28,8 @@ stages:
       size: 1582745
     - path: src/features/preprocess.py
       hash: md5
-      md5: 32feb67a7b665155c26fb7a52b6132a1
-      size: 3273
+      md5: 7d9272a0c335428cba658b5cc605b9c8
+      size: 6469
     params:
       params.yaml:
         base.random_state: 42
@@ -37,7 +37,6 @@ stages:
         data.drop_cols:
         - Area
         - Production
-        - Fertilizer
         - Crop_Year
     outs:
     - path: data/processed/columns.pkl
@@ -117,15 +116,39 @@ stages:
       size: 1582745
     - path: src/visualization/analyze.py
       hash: md5
-      md5: 2905b11e3b4c06926a32b36a060df01c
-      size: 3352
+      md5: 78549ebadf232e54ddb0b9d6fb65350d
+      size: 5501
     outs:
     - path: reports/eda_summary.txt
       hash: md5
-      md5: e8ed0cf64ab3c0ac92573f12b3016552
-      size: 2247
+      md5: 1cc49702cadcd0a649432a8a2c17af83
+      size: 6510
     - path: reports/figures/
       hash: md5
-      md5: f1e7e82d56fe18f631d2db7a06e3343c.dir
-      size: 83279
-      nfiles: 2
+      md5: 2fbc68a3d3da28f3154a7a99ec122a92.dir
+      size: 835687
+      nfiles: 19
+  train_evaluate:
+    cmd: python src/models/train_evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 28d4a206ef9d3a79422cd17f67ad2aa0
+      size: 7351031
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 0404644b9d858e0bb6a40564f06523ba
+      size: 29395525
+    - path: src/models/train_evaluate.py
+      hash: md5
+      md5: b50dd5e68cbe28fd714a40cae022f76a
+      size: 6592
+    outs:
+    - path: models/best_model.pkl
+      hash: md5
+      md5: be6b524550bc58ac2a3530de8f3240e2
+      size: 139157
+    - path: reports/model_comparison.csv
+      hash: md5
+      md5: 55ff96cd719cfd2f6c0a8149bd8105ed
+      size: 1352

@@ -14,9 +14,9 @@ venv/
 .idea/
 
 # Initializing Data/Models (Large files)
-data/
+/data/
 /models/
-reports/
+/reports/
 
 # MLflow
 mlruns/

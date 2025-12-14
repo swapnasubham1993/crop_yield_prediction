@@ -30,9 +30,6 @@ st.markdown("""
         cursor: pointer;
         width: 100%;
     }
-    .stSelectbox {
-        margin-bottom: 20px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
